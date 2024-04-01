@@ -17,22 +17,22 @@ def get_top_duplicated_words(word_list, top_n=5):
     return top_duplicated_words
 
 
-def extract_adjectives_vietnamese(comment):
-    # Perform part-of-speech tagging
-    tagged_words = pos_tag(comment)
+# def extract_adjectives_vietnamese(comment):
+#     # Perform part-of-speech tagging
+#     tagged_words = pos_tag(comment)
+#
+#     # Extract adjectives
+#     adjectives = [word for word, pos in tagged_words if pos == 'A']
+#
+#     return adjectives
 
-    # Extract adjectives
-    adjectives = [word for word, pos in tagged_words if pos == 'A']
 
-    return adjectives
-
-
-def create_adj_wordcloud(df):
+def create_adj_wordcloud(df,cleanser):
     type_comment = df['result'].head(1).values[0].upper()
     full_adj_word = []
     for k, text in tqdm(df['clean_review'].items(), f"Extract Adjective word from {type_comment}"):
         if isinstance(text, str):
-            word_ls = extract_adjectives_vietnamese(text)
+            word_ls = cleanser.extract_adjectives_vietnamese(text)
             full_adj_word.extend(word_ls)
 
     _comments = ' '.join(full_adj_word)

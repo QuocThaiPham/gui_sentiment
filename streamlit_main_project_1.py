@@ -222,27 +222,34 @@ def fn_about_project():
     # Objectives with colorful header
     st.header(":blue[🎯 Objectives:]")
     st.write("""
-    - Build a model to predict sentiment of comments
-    - Analyze restaurant comment data
+    Our project aims to analyze sentiment in comments and reviews, with a focus on those related to restaurants. 
+    
+    We seek to develop a machine learning model capable of accurately predicting sentiment based on textual data. 
+    
+    Additionally, we aim to provide insights into restaurant comment data through statistical analysis and visualization.
     """)
 
     # Algorithms Used with colorful header
     st.header(":blue[💡 Algorithms Used:]")
     st.write("""
-    - Machine Learning: Support Vector Machine
+    For sentiment analysis, we employ the Support Vector Machine (SVM) algorithm. 
+    
+    SVM is a powerful machine learning technique known for its effectiveness in classification tasks.
     """)
 
     # Model Building Process with colorful header
     st.header(":blue[🛠️ Model Building Process:]")
     st.write("""
-    1. Data collection
-    2. Preprocessing Vietnamese text data
-    3. Model building
-    4. Model evaluation => Choose the best model
-    5. Save the model
-    6. Apply the model in practice
-    7. Evaluation
-    8. Build interface and usage
+    Our model building process consists of the following steps:
+
+    1. **Data Collection:** Gathering comments and reviews related to restaurants from various sources.
+    2. **Data Preprocessing:** Cleaning and preparing the text data for analysis, including removing stopwords and punctuation, and performing tokenization.
+    3. **Model Building:** Training the Support Vector Machine (SVM) model on the preprocessed text data.
+    4. **Model Evaluation:** Assessing the performance of the trained model using evaluation metrics such as accuracy, precision, recall, and F1-score. Selecting the best-performing model.
+    5. **Model Deployment:** Saving the trained model for future use and deployment.
+    6. **Real-world Application:** Applying the trained model to analyze sentiment in real-world restaurant comments and reviews.
+    7. **Evaluation:** Continuously evaluating and refining the model's performance based on feedback and new data.
+    8. **Interface Development:** Creating a user-friendly interface for interacting with the model and viewing analysis results.
     """)
 
     # Implemented by with colorful header

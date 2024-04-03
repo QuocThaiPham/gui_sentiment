@@ -70,7 +70,7 @@ def get_top_duplicated_words(word_list, top_n=5):
 #     return adjectives
 
 
-def create_adj_wordcloud(df, cleanser):
+def create_adj_wordcloud(df, cleanser,title=''):
     type_comment = df['result'].head(1).values[0].upper()
     full_adj_word = []
     for k, text in tqdm(df['clean_review'].items(), f"Extract Adjective word from {type_comment}"):
@@ -89,7 +89,7 @@ def create_adj_wordcloud(df, cleanser):
     # Display WordCloud using Matplotlib's imshow on the specified ax
     ax.imshow(wc_pos, interpolation='bilinear')
     ax.axis('off')
-
+    ax.set_title(title)
     # Display WordCloud in Streamlit
     st.pyplot(fig)
     return full_adj_word, wc_pos
@@ -133,12 +133,19 @@ def restaurant_sentiment_analysis(final_df,
         price = selected_res['avg_price'].values[0]
         address = f"{selected_res['street'].values[0]} {str(selected_res['ward'].values[0])} District {selected_res['district'].values[0]}"
 
-        print(">>> OVERVIEW DATA")
-        print("Restaurant name:", restaurant_name)
-        print("Type restaurant:", type_restaurant)
-        print("Average Rating:", round(rating_score, 2))
-        print("Average Price:", price)
-        print("Address:", address)
+        st.write(f"""
+        ***>>> OVERVIEW DATA***
+        - Restaurant name: {restaurant_name}
+        - Type restaurant: {type_restaurant}
+        - Average Rating:: {round(rating_score, 2)}
+        - Average Price:: {price}
+        - Address:: {address}
+""")
+        # print("Restaurant name:", restaurant_name)
+        # print("Type restaurant:", type_restaurant)
+        # print("Average Rating:", round(rating_score, 2))
+        # print("Average Price:", price)
+        # print("Address:", address)
 
         # Extract Positive Negative and Neutral
         df_pos = selected_res[selected_res['result'] == 'positive']
@@ -156,8 +163,10 @@ def restaurant_sentiment_analysis(final_df,
                 else:
                     name = 'NEUTRAL'
 
-                word_ls, pos_wc = create_adj_wordcloud(df=df,cleanser=cleanser)
-                print("--- Succeed to create WordCloud")
+                word_ls, pos_wc = create_adj_wordcloud(df=df,
+                                                       cleanser=cleanser,
+                                                       title=f'{name} Review')
+                #print("--- Succeed to create WordCloud")
                 wc_ls.append({'name': name, 'wordcloud': pos_wc})
                 full_word_ls.append({'name': name, 'words': word_ls})
             else:
@@ -169,46 +178,47 @@ def restaurant_sentiment_analysis(final_df,
                     name = 'NEUTRAL'
                 print(f"\n>>> There is not type **{name}** in DataFrame")
 
-        # DISPLAY WORDCLOUD
-        fig = plt.figure(figsize=(15, 7))
-        # setting values to rows and column variables
-        columns = len(wc_ls)
-        for i in range(columns):
-            # Title name:
-            name = wc_ls[i]['name']
-            # Adds a subplot at the 1st position
-            fig.add_subplot(1, columns, i + 1)
-
-            # showing image
-            plt.imshow(wc_ls[i]['wordcloud'])
-            plt.axis('off')
-            plt.title(f"WordCloud of {name} review")
-
+        # # DISPLAY WORDCLOUD
+        # fig_ = plt.figure(figsize=(15, 7))
+        # # setting values to rows and column variables
+        # columns = len(wc_ls)
+        # for i in range(columns):
+        #     # Title name:
+        #     name = wc_ls[i]['name']
+        #     # Adds a subplot at the 1st position
+        #     fig_.add_subplot(1, columns, i + 1)
+        #
+        #     # showing image
+        #     plt.imshow(wc_ls[i]['wordcloud'])
+        #     plt.axis('off')
+        #     plt.title(f"WordCloud of {name} review")
+        #
+        # st.pyplot(fig=fig_)
         # DISPLAY TOP WORD in each class
-        print("\n\n>>> GET TOP 5 WORDS OCCURING MOST IN EACH CLASS:\n")
+        st.write("\n\n>>> GET TOP 5 WORDS OCCURING MOST IN EACH CLASS:\n")
         for kind in full_word_ls:
             name = kind['name']
             concat_list = get_top_duplicated_words(kind['words'], top_n=top_words)
-            print(f'{name}: {concat_list}')
+            st.write(f'{name}: {concat_list}')
 
         # DISPLAY RATE OF EACH TYPE REVIEW BY MONTH
-        palette = sns.color_palette('husl', n_colors=3)
-        fig, ax = plt.subplots(3, 1, figsize=(12, 8), sharex=True)
-        sns.lineplot(x=df_pos['date_review'].dt.month,
+        palette = sns.color_palette(palette='husl', n_colors=3)
+        fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(12, 8), sharex=True)
+        sns.lineplot(x=df_pos['date_time'].dt.month,
                      y=df_pos['rating_scaler'],
                      color=palette[0],
                      label='Positive',
                      ax=ax[0])
         ax[0].set_ylabel("Rating")
 
-        sns.lineplot(x=df_neg['date_review'].dt.month,
+        sns.lineplot(x=df_neg['date_time'].dt.month,
                      y=df_neg['rating_scaler'],
                      color=palette[1],
                      label='Negative',
                      ax=ax[1])
         ax[1].set_ylabel("Rating")
 
-        sns.lineplot(x=df_neu['date_review'].dt.month,
+        sns.lineplot(x=df_neu['date_time'].dt.month,
                      y=df_neu['rating_scaler'],
                      color=palette[2],
                      label='Neutral',
@@ -219,4 +229,4 @@ def restaurant_sentiment_analysis(final_df,
         fig.suptitle('Rating of Type Line Thourgh by Month', fontsize=16, y=1.02)
         plt.xlabel('Review Month')
         fig.tight_layout()
-        plt.show()
+        st.pyplot(fig)

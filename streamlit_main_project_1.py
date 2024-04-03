@@ -6,6 +6,8 @@ from Project1.Code.project_transformer import Data_Wrangling
 import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
+import io
+from contextlib import redirect_stdout
 import re
 # from Viet_lib.Viet_lib import process_text, convert_unicode, process_postag_thesea, remove_stopword
 from Project1.Code.utilities import preprocessing_text, display_emotion, get_top_duplicated_words, create_adj_wordcloud, restaurant_sentiment_analysis, get_dict_word
@@ -42,13 +44,18 @@ def get_prd_df(file_path, use_cols):
     return df
 
 
-res_df = get_prd_df(file_path='Project1/Clean_data/clean_restaurant.csv', use_cols=None)
+# res_df = get_prd_df(file_path='Project1/Clean_data/clean_restaurant.csv', use_cols=None)
 clean_review_df = get_prd_df(file_path='Project1/Clean_data/clean_review_data.csv', use_cols=None)
 final_df = get_prd_df(file_path='Project1/Clean_data/combine_review_res.csv', use_cols=None)
+final_df['date_time'] = pd.to_datetime(final_df['date_time'])
 
-positive_review_df = final_df[final_df['result'] == 'positive']
-negative_review_df = final_df[final_df['result'] == 'negative']
-neutral_review_df = final_df[final_df['result'] == 'neutral']
+# positive_review_df = final_df[final_df['result'] == 'positive']
+# negative_review_df = final_df[final_df['result'] == 'negative']
+# neutral_review_df = final_df[final_df['result'] == 'neutral']
+
+feat = ['ID', 'Restaurant', 'street', 'ward', 'district', 'start_time',
+        'end_time', 'IDRestaurant', 'avg_price', 'type_restaurant']
+res_df = final_df[feat]
 
 
 # ----------------- BUILD GUI -----------------
@@ -60,9 +67,9 @@ def fn_business_objective():
         data.to_csv("resources/new_file.csv", index=False)
 
     st.subheader("EDA DATA")
-    st.write("There are 2 datasets including the restaurant dataframe and the review dataframe")
-    st.subheader("1. Review Dataset")
-    st.write("#### 1.1. Some data")
+    st.write("- There are 2 datasets including the restaurant dataframe and the review dataframe")
+    st.subheader(":blue[1. Review Dataset]")
+    st.write("#### 1.1. View data")
     st.dataframe(clean_review_df.head())
     st.write("There are 29959 reviews")
 
@@ -70,13 +77,13 @@ def fn_business_objective():
 
     # Display the plot in Streamlit
     sns.set(style="whitegrid")
-    fig, ax = plt.subplots()
+    fig_hist, ax = plt.subplots()
     sns.histplot(data=clean_review_df,
                  x='rating_scaler',
                  kde=True,
                  color="skyblue",
                  edgecolor='white', ax=ax)
-    st.pyplot(fig)
+    st.pyplot(fig_hist)
 
     # st.image('resources/rating_plot.png')
     st.write("""
@@ -87,54 +94,72 @@ def fn_business_objective():
     st.write("#### 1.3. Distribution of Label: Not like - Neutral - Like")
     # Display the plot in Streamlit
     sns.set(style="whitegrid")
-    fig, ax = plt.subplots()
-    label_df = clean_review_df['label'].replace({0: 'Dislike', 1: 'Like', 2: 'Neutral'})
+    fig_label, ax = plt.subplots()
+    label_df = clean_review_df[['label']].replace(to_replace={0: 'Dislike', 1: 'Like', 2: 'Neutral'})
     sns.countplot(data=label_df,
-                  color="skyblue",
-                  edgecolor='white', ax=ax)
-    st.pyplot(fig)
+                  x='label',
+                  # color="skyblue",
+                  edgecolor='white',
+                  ax=ax)
+    st.pyplot(fig_label)
 
     # st.image('resources/label_count.png')
     st.write("- As can be seen the count plot, **'Like'** label has the most distribution")
 
     st.write("#### 1.4. Wordcloud of **Dislike** label")
-    #create_adj_wordcloud(df=negative_review_df, cleanser=cleanser)
+    # create_adj_wordcloud(df=negative_review_df, cleanser=cleanser)
     st.image('resources/Image/dislike.png')
 
     st.write("#### 1.5. Wordcloud of **Like** label")
-    #create_adj_wordcloud(df=positive_review_df, cleanser=cleanser)
+    # create_adj_wordcloud(df=positive_review_df, cleanser=cleanser)
     st.image('resources/Image/Like.png')
 
     st.write("#### 1.6. Wordcloud of **Neutral** label")
-    #create_adj_wordcloud(df=neutral_review_df, cleanser=cleanser)
+    # create_adj_wordcloud(df=neutral_review_df, cleanser=cleanser)
     st.image('resources/Image/neutral.png')
 
-    st.subheader("2. Restaurant Dataset")
+    st.subheader(":blue[2. Restaurant Dataset]")
     st.write(" #### 2.1. View data")
     st.dataframe(res_df.head(10))
+
     st.text("DataFrame Info:")
-    st.write()
-    st.write("* Có tất cả 1622 nhà hàng")
+    # Create a StringIO object to capture printed output
+    string_buffer = io.StringIO()
+    # Redirect printed output to the StringIO object
+    with redirect_stdout(string_buffer):
+        # Your code that prints data
+        res_df.info()
+    # Get the captured output as a string
+    captured_output = string_buffer.getvalue()
 
-    st.write(" #### 2.2. Biểu đồ phân bố nhà hàng ở các quận")
-    st.image('resources/restaurant_districts.png')
+    st.text(f"""{captured_output}""")
 
-    st.write("#### 2.3. Mức giá trung bình tại các quận")
-    st.image('resources/price_district.png')
-    st.write("""
-    * Mức giá trung bình tại quận 1, 2, 5 cao hơn các quận khác.
-    * Mức giá trung bình thấp nhất ở quận 10, 11, 12.""")
+    st.write("- There are 1605 restaurants")
+
+    st.write("#### 2.2. District Distribution of All Restaurants]")
+    sns.set(style="whitegrid")
+    fig_dist_hist, ax = plt.subplots(figsize=(12,12))
+    sns.barplot(data=res_df,
+                y='district',
+                x='avg_price',
+                orient='h',
+                edgecolor='white',
+                ax=ax)
+    st.pyplot(fig_dist_hist)
+
+    st.write(""" As can be seen the bar graph,
+    * there are many fancy restaurants focusing Dis.2, 12, 3. 
+    * There are many casual restaurants in Dis 9, 10, 11.
+    """)
 
 
 def fn_new_prediction():
-    # st.subheader("New Prediction")
     # load model classication
     pkl_filename = "resources/project_1_model_SVC.sav"
     model = pickle.load(open(pkl_filename, 'rb'))
-    st.subheader("Select data")
-    # flag = False
-    # lines = None
-    type = st.radio("Upload data or Input data?", options=("Input", "Upload"))
+    st.subheader(":blue[Upload data or Input data?]")
+
+    type = st.radio("", options=("Input", "Upload"))
     st.write("""
     ##### Example:""")
     st.write('Like: Quán này ngon lắm đó mọi người!!!')
@@ -150,7 +175,8 @@ def fn_new_prediction():
             # lines = lines[0]
             # flag = True
     if type == "Input":
-        content = st.text_area(label="Input your comment:")
+        st.write("### :blue[Please Input your comment 👇]")
+        content = st.text_area(label="")
 
         if content != "":
             x_new = preprocessing_text(text=content,
@@ -164,46 +190,21 @@ def fn_new_prediction():
             display_emotion(y_pred_new)
 
 
-# def generate_wordcloud(text):
-#     wordcloud = WordCloud(width=800, height=600, background_color='white', max_words=100).generate(text)
-#     plt.figure(figsize=(10, 6))
-#     plt.imshow(wordcloud, interpolation='bilinear')
-#     plt.axis('off')
-#     st.set_option('deprecation.showPyplotGlobalUse', False)
-#     st.pyplot()
-
-
 def fn_restaurant_explore():
-    st.subheader("Restaurant Explore")
-
-    st.write('Chọn tên một nhà hàng để xem một số thông tin của nhà hàng đó.')
+    st.write("### :blue[Please select restaurant you would like to analyse: 👇]")
     # restaurant_name = st.text_area(label="Input restaurant name:")
 
     # Dropdown for selecting restaurant
     name_list = res_df['Restaurant'].unique()
-    selected_restaurant = st.selectbox("Select a restaurant:", sorted(name_list))
+    selected_restaurant = st.selectbox(label='',
+                                       options=sorted(name_list),
+                                       index=None,
+                                       placeholder='Please select Restaurant Name')
 
     # Display information about the selected restaurant
     restaurant_info = res_df[res_df["Restaurant"] == selected_restaurant]
 
     if not restaurant_info.empty:
-        # Display rating and word cloud
-        # Filter the dataset based on the restaurant name provided by the user
-        # restaurant_df = data[data['Restaurant'] == restaurant_name]
-        # Extract ratings and comments
-        # ratings = restaurant_info['Rating']
-        # rating_score = ratings.mean()
-        # price = restaurant_info['Price'].values[0]
-        # address = restaurant_info['Address'].values[0]
-
-        # st.write('Restaurant: ' + str(selected_restaurant))
-        # st.write("Average Rating: " + str(round(rating_score, 2)) + '/10')
-        # st.write("Price: " + str(price))
-        # st.write("Location: " + str(address))
-        # st.write("""
-        # #### Một số từ ngữ xuất hiện nhiều trong comment của khách hàng""")
-
-        # comments = ' '.join(restaurant_info['Comment_new'])
         id_res = res_df['ID'].values[0]
         restaurant_sentiment_analysis(final_df=final_df,
                                       res_df=res_df,
@@ -213,55 +214,65 @@ def fn_restaurant_explore():
 
 
 def fn_about_project():
-    st.title("Giới thiệu Project")
 
-    st.header("Mục tiêu:")
+    # Title with colorful background
+    st.title(":orange[🚀 Project Introduction]")
+    st.markdown("---")
+
+    # Objectives with colorful header
+    st.header(":blue[🎯 Objectives:]")
     st.write("""
-    - Xây dựng mô hình dự đoán cảm xúc của bình luận
-    - Thống kê dữ liệu bình luận của nhà hàng
+    - Build a model to predict sentiment of comments
+    - Analyze restaurant comment data
     """)
 
-    st.header("Thuật toán sử dụng:")
+    # Algorithms Used with colorful header
+    st.header(":blue[💡 Algorithms Used:]")
     st.write("""
     - Machine Learning: Support Vector Machine
     """)
 
-    st.header("Quy trình xây dựng mô hình:")
+    # Model Building Process with colorful header
+    st.header(":blue[🛠️ Model Building Process:]")
     st.write("""
-    1. Thu thập dữ liệu
-    2. Tiền xử lý dữ liệu tiếng việt
-    3. Xây dựng mô hình
-    4. Đánh giá mô hình => Chọn mô hình tốt nhất
-    5. Lưu mô hình
-    6. Áp dụng mô hình vào thực tế
-    7. Đánh giá
-    8. Xây dựng giao diện và sử dụng
+    1. Data collection
+    2. Preprocessing Vietnamese text data
+    3. Model building
+    4. Model evaluation => Choose the best model
+    5. Save the model
+    6. Apply the model in practice
+    7. Evaluation
+    8. Build interface and usage
     """)
 
-    st.header("Người thực hiện:")
+    # Implemented by with colorful header
+    st.header(":blue[👨‍💻 Implemented by:]")
     st.write("""
-    Phạm Quốc Thái
+    - Pham Quoc Thai
+    - Le Nguyen Duc Tri
     """)
 
 
 def main():
-    st.title("Project 1: Sentiment Analysis")
 
     with st.sidebar:
-        choice = option_menu("Main Menu", ["About the project", "Business Objective", "Emotion Prediction", 'Restaurant Explore'],
+        choice = option_menu(menu_title="Main Menu",
+                             options=["About the project", "Business Objective", "Emotion Prediction", 'Restaurant Explore'],
                              icons=['info-square', 'lightbulb', 'search', "list-task"])
         st.subheader(f"{choice} Selected")
-    choice
-
     if choice is not None:
         if choice == 'About the project':
+            st.title(":rainbow[Project 1: Sentiment Analysis]")
             fn_about_project()
         elif choice == 'Business Objective':
+            st.title(f":orange[{choice}]")
             fn_business_objective()
 
         elif choice == 'Emotion Prediction':
+            st.title(f":orange[{choice}]")
             fn_new_prediction()
         elif choice == 'Restaurant Explore':
+            st.title(f":orange[{choice}]")
             fn_restaurant_explore()
 
 

@@ -6,6 +6,49 @@ import numpy as np
 from underthesea import word_tokenize, pos_tag, sent_tokenize, sentiment
 from tqdm.auto import tqdm
 from collections import defaultdict, Counter
+import streamlit as st
+
+
+def get_dict_word(file_path: str) -> dict:
+    with open(file_path, 'r', encoding="utf8") as file:
+        _lst = file.read().split('\n')
+        _dict = {}
+        for line in _lst:
+            key, value = line.split('\t')
+            _dict[key] = str(value)
+
+    return _dict
+
+
+def preprocessing_text(text,
+                       cleanser,
+                       vector_model,  # ='resources/countvectorizer_model.pkl',
+                       tfidf_model):  # 'resources/tfidf_model.pkl'
+    clean_text = cleanser.process_text(text=text)
+    clean_text = cleanser.convert_unicode(str(clean_text))
+    clean_text = cleanser.process_postag_thesea(clean_text)
+
+    # initialize countvectorizer and TFIDF
+    vectorizer = vector_model
+    tfidf = tfidf_model
+
+    # transform X_test
+    _pre_X_test = vectorizer.transform([clean_text])
+    _pre_X_test = tfidf.transform(_pre_X_test)
+
+    return _pre_X_test
+
+
+def display_emotion(emotion_index,
+                    like_path="resources/like_icon.png",
+                    not_like_path="resources/not_like_icon.png",
+                    neutral_path="resources/neutral_icon.png"):
+    if emotion_index == 0:
+        st.image(not_like_path, caption="Not Like", width=200)
+    elif emotion_index == 1:
+        st.image(neutral_path, caption="Neutral", width=200)
+    elif emotion_index == 2:
+        st.image(like_path, caption="Like", width=200)
 
 
 def get_top_duplicated_words(word_list, top_n=5):
@@ -27,7 +70,7 @@ def get_top_duplicated_words(word_list, top_n=5):
 #     return adjectives
 
 
-def create_adj_wordcloud(df,cleanser):
+def create_adj_wordcloud(df, cleanser):
     type_comment = df['result'].head(1).values[0].upper()
     full_adj_word = []
     for k, text in tqdm(df['clean_review'].items(), f"Extract Adjective word from {type_comment}"):
@@ -41,11 +84,15 @@ def create_adj_wordcloud(df,cleanser):
     wc_pos = WordCloud(background_color='white',
                        collocations=False,
                        max_words=50).generate(_comments)
+    plt.figure(figsize=(10, 6))
+    plt.imshow(wc_pos, interpolation='bilinear')
+    plt.axis('off')
+    st.set_option('deprecation.showPyplotGlobalUse', False)
+    st.pyplot()
     return full_adj_word, wc_pos
 
 
-def restaurant_sentiment_analysis(final_df, id_res=None, top_words: int = 5):
-    global res_df
+def restaurant_sentiment_analysis(final_df, res_df, id_res=None, top_words: int = 5):
     # ---- FIRST STEP: SELECT RESTAURANT ---
     if id_res:
         id_selected = id_res

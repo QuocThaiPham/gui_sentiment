@@ -16,7 +16,6 @@ import warnings
 from underthesea import word_tokenize, pos_tag, sent_tokenize
 import re
 
-
 # SET UP BASE ESTIMATOR
 import sklearn.compose as sc
 import sklearn.preprocessing as sp
@@ -43,31 +42,42 @@ class Data_Wrangling(BaseEstimator, TransformerMixin):
         document = re.sub(r'\s+', ' ', document).strip()
         return document
 
+    def loaddicchar(self):
+        dic = {}
+        char1252 = 'à|á|ả|ã|ạ|ầ|ấ|ẩ|ẫ|ậ|ằ|ắ|ẳ|ẵ|ặ|è|é|ẻ|ẽ|ẹ|ề|ế|ể|ễ|ệ|ì|í|ỉ|ĩ|ị|ò|ó|ỏ|õ|ọ|ồ|ố|ổ|ỗ|ộ|ờ|ớ|ở|ỡ|ợ|ù|ú|ủ|ũ|ụ|ừ|ứ|ử|ữ|ự|ỳ|ý|ỷ|ỹ|ỵ|À|Á|Ả|Ã|Ạ|Ầ|Ấ|Ẩ|Ẫ|Ậ|Ằ|Ắ|Ẳ|Ẵ|Ặ|È|É|Ẻ|Ẽ|Ẹ|Ề|Ế|Ể|Ễ|Ệ|Ì|Í|Ỉ|Ĩ|Ị|Ò|Ó|Ỏ|Õ|Ọ|Ồ|Ố|Ổ|Ỗ|Ộ|Ờ|Ớ|Ở|Ỡ|Ợ|Ù|Ú|Ủ|Ũ|Ụ|Ừ|Ứ|Ử|Ữ|Ự|Ỳ|Ý|Ỷ|Ỹ|Ỵ'.split(
+            '|')
+        charutf8 = "à|á|ả|ã|ạ|ầ|ấ|ẩ|ẫ|ậ|ằ|ắ|ẳ|ẵ|ặ|è|é|ẻ|ẽ|ẹ|ề|ế|ể|ễ|ệ|ì|í|ỉ|ĩ|ị|ò|ó|ỏ|õ|ọ|ồ|ố|ổ|ỗ|ộ|ờ|ớ|ở|ỡ|ợ|ù|ú|ủ|ũ|ụ|ừ|ứ|ử|ữ|ự|ỳ|ý|ỷ|ỹ|ỵ|À|Á|Ả|Ã|Ạ|Ầ|Ấ|Ẩ|Ẫ|Ậ|Ằ|Ắ|Ẳ|Ẵ|Ặ|È|É|Ẻ|Ẽ|Ẹ|Ề|Ế|Ể|Ễ|Ệ|Ì|Í|Ỉ|Ĩ|Ị|Ò|Ó|Ỏ|Õ|Ọ|Ồ|Ố|Ổ|Ỗ|Ộ|Ờ|Ớ|Ở|Ỡ|Ợ|Ù|Ú|Ủ|Ũ|Ụ|Ừ|Ứ|Ử|Ữ|Ự|Ỳ|Ý|Ỷ|Ỹ|Ỵ".split(
+            '|')
+        for i in range(len(char1252)):
+            dic[char1252[i]] = charutf8[i]
+        return dic
+
+    # Đưa toàn bộ dữ liệu qua hàm này để chuẩn hóa lại
+    def convert_unicode(self,txt):
+        dicchar = self.loaddicchar()
+        return regex.sub(
+            r'à|á|ả|ã|ạ|ầ|ấ|ẩ|ẫ|ậ|ằ|ắ|ẳ|ẵ|ặ|è|é|ẻ|ẽ|ẹ|ề|ế|ể|ễ|ệ|ì|í|ỉ|ĩ|ị|ò|ó|ỏ|õ|ọ|ồ|ố|ổ|ỗ|ộ|ờ|ớ|ở|ỡ|ợ|ù|ú|ủ|ũ|ụ|ừ|ứ|ử|ữ|ự|ỳ|ý|ỷ|ỹ|ỵ|À|Á|Ả|Ã|Ạ|Ầ|Ấ|Ẩ|Ẫ|Ậ|Ằ|Ắ|Ẳ|Ẵ|Ặ|È|É|Ẻ|Ẽ|Ẹ|Ề|Ế|Ể|Ễ|Ệ|Ì|Í|Ỉ|Ĩ|Ị|Ò|Ó|Ỏ|Õ|Ọ|Ồ|Ố|Ổ|Ỗ|Ộ|Ờ|Ớ|Ở|Ỡ|Ợ|Ù|Ú|Ủ|Ũ|Ụ|Ừ|Ứ|Ử|Ữ|Ự|Ỳ|Ý|Ỷ|Ỹ|Ỵ',
+            lambda x: dicchar[x.group()], txt)
+
     def process_text(self, text):
         document = text.lower()
         document = document.replace("’", '')
         document = re.sub(r'\.+', "", document)
         new_sentence = ''
         for sentence in sent_tokenize(document):
-            # # CONVERT EMOJI ICON
-            # sentence = ''.join(' ' + self.emoji_dict[word] + ' ' if word in self.emoji_dict else word for word in list(sentence))
-            #
-            # # CONVERT TEEN CODE
-            # sentence = ' '.join(self.teen_dict[word] if word in self.teen_dict else word for word in sentence.split())
-            #
-            # # CONVERT ENGLISH CODE
-            # sentence = ' '.join(self.eng_vn_dict[word] if word in self.eng_vn_dict else word for word in sentence.split())
+            sentence = ''.join(' ' + self.emoji_dict[word] + ' ' if word in self.emoji_dict else word for word in list(sentence))  # CONVERT EMOJI ICON
+            sentence = ' '.join(self.teen_dict[word] if word in self.teen_dict else word for word in sentence.split())  # CONVERT TEEN CODE
+            sentence = ' '.join(self.eng_vn_dict[word] if word in self.eng_vn_dict else word for word in sentence.split())  # CONVERT ENGLISH CODE
 
             # DEL Punctuation & Numbers
             pattern = r'(?i)\b[a-záàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệóòỏõọôốồổỗộơớờởỡợíìỉĩịúùủũụưứừửữựýỳỷỹỵđ]+\b'
             sentence = ' '.join(re.findall(pattern, sentence))
 
             # DEL wrong words
-            # sentence = ' '.join('' if word in self.wrong_lst else word for word in sentence.split())
+            sentence = ' '.join('' if word in self.wrong_lst else word for word in sentence.split())
 
             # Remove stop words
-            # sentence = self.remove_stopword(text=sentence)
-
+            sentence = self.remove_stopword(text=sentence)
             new_sentence = new_sentence + sentence
             document = new_sentence
 

@@ -2,57 +2,46 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 import numpy as np
 import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-
-# from sklearn.model_selection import train_test_split
-# from sklearn.metrics import accuracy_score
-# from sklearn.metrics import confusion_matrix
-# from sklearn. metrics import classification_report, roc_auc_score, roc_curve
+from Project1.Code.project_transformer import Data_Wrangling
 import pickle
-# import streamlit as st
-import matplotlib.pyplot as plt
-from wordcloud import WordCloud
-# from sklearn import metrics
-import seaborn as sns
-import regex
-from Viet_lib.Viet_lib import *
+import re
+# from Viet_lib.Viet_lib import process_text, convert_unicode, process_postag_thesea, remove_stopword
+from Project1.Code.utilities import preprocessing_text, display_emotion, get_top_duplicated_words, create_adj_wordcloud, restaurant_sentiment_analysis, get_dict_word
+
+# ----------------- INITIALIZATION -----------------
+emoji_dict = get_dict_word(file_path='Project1/DATA_shopeefood/files/emojicon.txt')  # Emoji
+teen_dict = get_dict_word(file_path='Project1/DATA_shopeefood/files/teencode.txt')  # Teen
+eng_dict = get_dict_word(file_path='Project1/DATA_shopeefood/files/english-vnmese.txt')  # eng
+
+with open('Project1/DATA_shopeefood/files/wrong-word.txt', 'r', encoding="utf8") as file:  # WRONG WORD
+    wrong_lst = file.read().split('\n')
+
+with open('Project1/DATA_shopeefood/files/vietnamese-stopwords.txt', 'r', encoding="utf8") as file:  # STOP WORD
+    stop_lst = file.read().split('\n')
+
+# GET CLEANSER
+cleanser = Data_Wrangling(emoji_dict=emoji_dict,
+                          teen_dict=teen_dict,
+                          wrong_lst=wrong_lst,
+                          eng_vn_dict=eng_dict,
+                          stop_words=stop_lst)
+# Model Vectorize and TFIDF
+with open('resources/countvectorizer_model.pkl', 'rb') as f:
+    vec_m = pickle.load(f)
+with open('resources/tfidf_model.pkl', 'rb') as f_2:
+    tfidf_m = pickle.load(f_2)
+# ----------------- ADD CACHE -----------------
+@st.cache_resource()
+def get_prd_df(file_path, use_cols):
+    df = pd.read_csv(filepath_or_buffer=file_path,
+                     usecols=use_cols)
+    return df
+
+data_res = get_prd_df(file_path='resources/restaurant_comment.csv',use_cols=None)
 
 
-def preprocessing_text(text):
-    # convert to lower_case
-    clean_text = text.lower()
-
-    # remove "'"
-    clean_text = regex.sub("'", '', clean_text)
-
-    # convert multiple dot to 1 dot    
-    clean_text = regex.sub(r'\.+', ".", clean_text)
-
-    # Preprocessing for punctuations, uppercases, and some wrong words, and emoji
-    clean_text = process_text(str(clean_text), emoji_dict, teen_dict, wrong_lst)
-
-    clean_text = convert_unicode(str(clean_text))
-
-    clean_text = process_postag_thesea(str(clean_text))
-
-    clean_text = remove_stopword(str(clean_text), stopwords_lst)
-
-    # initialize countvectorizer
-    vectorizer = pickle.load(open('resources/countvectorizer_model.pkl', 'rb'))
-
-    # intialize TFIDF
-    tfidf = pickle.load(open('resources/tfidf_model.pkl', 'rb'))
-
-    # transform X_test
-    _pre_X_test = vectorizer.transform([clean_text])
-    _pre_X_test = tfidf.transform(_pre_X_test)
-
-    return _pre_X_test
-
-
+# ----------------- BUILD GUI -----------------
 def fn_business_objective():
-    # st.subheader("Business Objective")
-
     # Upload file
     uploaded_file = st.file_uploader("Choose a file", type=['csv'])
     if uploaded_file is not None:
@@ -60,47 +49,37 @@ def fn_business_objective():
         data.to_csv("resources/new_file.csv", index=False)
 
     st.subheader("EDA tập dữ liệu")
-    st.write("""Dữ liệu: Gồm 2 tập dữ liệu về nhà hàng và bình luận khách hàng""")
+    st.write("Dữ liệu: Gồm 2 tập dữ liệu về nhà hàng và bình luận khách hàng")
     st.subheader("1. Dữ liệu bình luận")
     some_data = pd.read_csv('resources/some_data.csv')
-    st.write("""
-    #### 1.1. Some data""")
+    st.write("#### 1.1. Some data")
     st.dataframe(some_data)
-    st.write("""
-    * Có tất cả 29959 bình luận""")
+    st.write(" * Có tất cả 29959 bình luận")
 
-    st.write("""
-    #### 1.2. Biểu đồ phân bố rating""")
+    st.write("#### 1.2. Biểu đồ phân bố rating")
     st.image('resources/rating_plot.png')
     st.write("""
     * Rating score có giá trị từ 0 đến 10
     * Rating phân bố nhiều từ 7 trở lên""")
 
-    st.write("""
-    #### 1.3. Số lượng loại bình luận: Not like - Neutral - Like""")
+    st.write("#### 1.3. Số lượng loại bình luận: Not like - Neutral - Like")
     st.image('resources/label_count.png')
-    st.write("""
-    * Bình luận Like chiếm đa số""")
+    st.write("* Bình luận Like chiếm đa số")
 
-    st.write("""
-    #### 1.4. Một số từ xuất hiện nhiều trong bình luận Not like""")
+    st.write("#### 1.4. Một số từ xuất hiện nhiều trong bình luận Not like")
     st.image('resources/not_like_comment.png')
 
-    st.write("""
-    #### 1.5. Một số từ xuất hiện nhiều trong bình luận Neutral""")
+    st.write(" #### 1.5. Một số từ xuất hiện nhiều trong bình luận Neutral")
     st.image('resources/neutral_comment.png')
 
-    st.write("""
-    #### 1.6. Một số từ xuất hiện nhiều trong bình luận Like""")
+    st.write(" #### 1.6. Một số từ xuất hiện nhiều trong bình luận Like")
     st.image('resources/like_comment.png')
 
     st.subheader("2. Dữ liệu nhà hàng")
     some_restaurant = pd.read_csv('resources/some_restaurant.csv')
-    st.write("""
-    #### 2.1. Some data""")
-    st.dataframe(some_restaurant)
-    st.write("""
-    * Có tất cả 1622 nhà hàng""")
+    st.write(" #### 2.1. Some data")
+    st.dataframe(some_restaurant) sss
+    st.write("* Có tất cả 1622 nhà hàng")
 
     st.write("""
     #### 2.2. Biểu đồ phân bố nhà hàng ở các quận""")
@@ -113,24 +92,14 @@ def fn_business_objective():
     * Mức giá trung bình tại quận 1, 2, 5 cao hơn các quận khác.
     * Mức giá trung bình thấp nhất ở quận 10, 11, 12.""")
 
-
-def display_emotion(emotion_index):
-    if emotion_index == 0:
-        st.image("resources/not_like_icon.png", caption="Not Like", width=200)
-    elif emotion_index == 1:
-        st.image("resources/neutral_icon.png", caption="Neutral", width=200)
-    elif emotion_index == 2:
-        st.image("resources/like_icon.png", caption="Like", width=200)
-
-
 def fn_new_prediction():
     # st.subheader("New Prediction")
     # load model classication
     pkl_filename = "resources/project_1_model_SVC.sav"
     model = pickle.load(open(pkl_filename, 'rb'))
     st.subheader("Select data")
-    flag = False
-    lines = None
+    # flag = False
+    # lines = None
     type = st.radio("Upload data or Input data?", options=("Input", "Upload"))
     st.write("""
     ##### Example:""")
@@ -144,35 +113,35 @@ def fn_new_prediction():
             lines = pd.read_csv(uploaded_file_1, header=None)
             st.dataframe(lines)
             # st.write(lines.columns)
-            lines = lines[0]
-            flag = True
+            # lines = lines[0]
+            # flag = True
     if type == "Input":
         content = st.text_area(label="Input your comment:")
 
         if content != "":
-            # lines = np.array([content])
-
-            x_new = preprocessing_text(content)
+            x_new = preprocessing_text(text=content,
+                                       cleanser=cleanser,
+                                       vector_model=vec_m,
+                                       tfidf_model=tfidf_m)
             # st.write(x_new)
-
             y_pred_new = model.predict(x_new)
             # st.code("New predictions (0: Not Like, 1: Neutral, 2: Like): " + str(y_pred_new))
             st.write(f"Comment: {content}")
             display_emotion(y_pred_new)
 
 
-def generate_wordcloud(text):
-    wordcloud = WordCloud(width=800, height=600, background_color='white', max_words=100).generate(text)
-    plt.figure(figsize=(10, 6))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    st.set_option('deprecation.showPyplotGlobalUse', False)
-    st.pyplot()
+# def generate_wordcloud(text):
+#     wordcloud = WordCloud(width=800, height=600, background_color='white', max_words=100).generate(text)
+#     plt.figure(figsize=(10, 6))
+#     plt.imshow(wordcloud, interpolation='bilinear')
+#     plt.axis('off')
+#     st.set_option('deprecation.showPyplotGlobalUse', False)
+#     st.pyplot()
 
 
 def fn_restaurant_explore():
     st.subheader("Restaurant Explore")
-    data = pd.read_csv('resources/restaurant_comment.csv')
+
 
     st.write('Chọn tên một nhà hàng để xem một số thông tin của nhà hàng đó.')
     # restaurant_name = st.text_area(label="Input restaurant name:")
@@ -194,12 +163,12 @@ def fn_restaurant_explore():
         price = restaurant_info['Price'].values[0]
         address = restaurant_info['Address'].values[0]
 
-        st.write('Restaurant: ' + str(selected_restaurant))
-        st.write("Average Rating: " + str(round(rating_score, 2)) + '/10')
-        st.write("Price: " + str(price))
-        st.write("Location: " + str(address))
-        st.write("""
-        #### Một số từ ngữ xuất hiện nhiều trong comment của khách hàng""")
+        # st.write('Restaurant: ' + str(selected_restaurant))
+        # st.write("Average Rating: " + str(round(rating_score, 2)) + '/10')
+        # st.write("Price: " + str(price))
+        # st.write("Location: " + str(address))
+        # st.write("""
+        # #### Một số từ ngữ xuất hiện nhiều trong comment của khách hàng""")
 
         comments = ' '.join(restaurant_info['Comment_new'])
         generate_wordcloud(comments)

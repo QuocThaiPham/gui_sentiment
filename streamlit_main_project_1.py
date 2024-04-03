@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from Project1.Code.project_transformer import Data_Wrangling
 import pickle
+import matplotlib.pyplot as plt
+import seaborn as sns
 import re
 # from Viet_lib.Viet_lib import process_text, convert_unicode, process_postag_thesea, remove_stopword
 from Project1.Code.utilities import preprocessing_text, display_emotion, get_top_duplicated_words, create_adj_wordcloud, restaurant_sentiment_analysis, get_dict_word
@@ -30,6 +32,8 @@ with open('resources/countvectorizer_model.pkl', 'rb') as f:
     vec_m = pickle.load(f)
 with open('resources/tfidf_model.pkl', 'rb') as f_2:
     tfidf_m = pickle.load(f_2)
+
+
 # ----------------- ADD CACHE -----------------
 @st.cache_resource()
 def get_prd_df(file_path, use_cols):
@@ -37,7 +41,14 @@ def get_prd_df(file_path, use_cols):
                      usecols=use_cols)
     return df
 
-data_res = get_prd_df(file_path='resources/restaurant_comment.csv',use_cols=None)
+
+res_df = get_prd_df(file_path='Project1/Clean_data/clean_restaurant.csv', use_cols=None)
+clean_review_df = get_prd_df(file_path='Project1/Clean_data/clean_review_data.csv', use_cols=None)
+final_df = get_prd_df(file_path='Project1/Clean_data/combine_review_res.csv', use_cols=None)
+
+positive_review_df = final_df[final_df['result'] == 'positive']
+negative_review_df = final_df[final_df['result'] == 'negative']
+neutral_review_df = final_df[final_df['result'] == 'neutral']
 
 
 # ----------------- BUILD GUI -----------------
@@ -48,49 +59,72 @@ def fn_business_objective():
         data = pd.read_csv(uploaded_file, encoding='latin-1')
         data.to_csv("resources/new_file.csv", index=False)
 
-    st.subheader("EDA tập dữ liệu")
-    st.write("Dữ liệu: Gồm 2 tập dữ liệu về nhà hàng và bình luận khách hàng")
-    st.subheader("1. Dữ liệu bình luận")
-    some_data = pd.read_csv('resources/some_data.csv')
+    st.subheader("EDA DATA")
+    st.write("There are 2 datasets including the restaurant dataframe and the review dataframe")
+    st.subheader("1. Review Dataset")
     st.write("#### 1.1. Some data")
-    st.dataframe(some_data)
-    st.write(" * Có tất cả 29959 bình luận")
+    st.dataframe(clean_review_df.head())
+    st.write("There are 29959 reviews")
 
-    st.write("#### 1.2. Biểu đồ phân bố rating")
-    st.image('resources/rating_plot.png')
+    st.write("#### 1.2. Plot of Rating Distribution")
+
+    # Display the plot in Streamlit
+    sns.set(style="whitegrid")
+    fig, ax = plt.subplots()
+    sns.histplot(data=clean_review_df,
+                 x='rating_scaler',
+                 kde=True,
+                 color="skyblue",
+                 edgecolor='white', ax=ax)
+    st.pyplot(fig)
+
+    # st.image('resources/rating_plot.png')
     st.write("""
-    * Rating score có giá trị từ 0 đến 10
-    * Rating phân bố nhiều từ 7 trở lên""")
+    - Rating score is scaled from 0 to 10
+    - Regards to histogram, the most popular range is from 8 to 10 
+    """)
 
-    st.write("#### 1.3. Số lượng loại bình luận: Not like - Neutral - Like")
-    st.image('resources/label_count.png')
-    st.write("* Bình luận Like chiếm đa số")
+    st.write("#### 1.3. Distribution of Label: Not like - Neutral - Like")
+    # Display the plot in Streamlit
+    sns.set(style="whitegrid")
+    fig, ax = plt.subplots()
+    label_df = clean_review_df['label'].replace({0: 'Dislike', 1: 'Like', 2: 'Neutral'})
+    sns.countplot(data=label_df,
+                  color="skyblue",
+                  edgecolor='white', ax=ax)
+    st.pyplot(fig)
 
-    st.write("#### 1.4. Một số từ xuất hiện nhiều trong bình luận Not like")
-    st.image('resources/not_like_comment.png')
+    # st.image('resources/label_count.png')
+    st.write("- As can be seen the count plot, **'Like'** label has the most distribution")
 
-    st.write(" #### 1.5. Một số từ xuất hiện nhiều trong bình luận Neutral")
-    st.image('resources/neutral_comment.png')
+    st.write("#### 1.4. Wordcloud of **Dislike** label")
+    #create_adj_wordcloud(df=negative_review_df, cleanser=cleanser)
+    st.image('resources/Image/dislike.png')
 
-    st.write(" #### 1.6. Một số từ xuất hiện nhiều trong bình luận Like")
-    st.image('resources/like_comment.png')
+    st.write("#### 1.5. Wordcloud of **Like** label")
+    #create_adj_wordcloud(df=positive_review_df, cleanser=cleanser)
+    st.image('resources/Image/Like.png')
 
-    st.subheader("2. Dữ liệu nhà hàng")
-    some_restaurant = pd.read_csv('resources/some_restaurant.csv')
-    st.write(" #### 2.1. Some data")
-    st.dataframe(some_restaurant) sss
+    st.write("#### 1.6. Wordcloud of **Neutral** label")
+    #create_adj_wordcloud(df=neutral_review_df, cleanser=cleanser)
+    st.image('resources/Image/neutral.png')
+
+    st.subheader("2. Restaurant Dataset")
+    st.write(" #### 2.1. View data")
+    st.dataframe(res_df.head(10))
+    st.text("DataFrame Info:")
+    st.write()
     st.write("* Có tất cả 1622 nhà hàng")
 
-    st.write("""
-    #### 2.2. Biểu đồ phân bố nhà hàng ở các quận""")
+    st.write(" #### 2.2. Biểu đồ phân bố nhà hàng ở các quận")
     st.image('resources/restaurant_districts.png')
 
-    st.write("""
-    #### 2.3. Mức giá trung bình tại các quận""")
+    st.write("#### 2.3. Mức giá trung bình tại các quận")
     st.image('resources/price_district.png')
     st.write("""
     * Mức giá trung bình tại quận 1, 2, 5 cao hơn các quận khác.
     * Mức giá trung bình thấp nhất ở quận 10, 11, 12.""")
+
 
 def fn_new_prediction():
     # st.subheader("New Prediction")
@@ -142,26 +176,25 @@ def fn_new_prediction():
 def fn_restaurant_explore():
     st.subheader("Restaurant Explore")
 
-
     st.write('Chọn tên một nhà hàng để xem một số thông tin của nhà hàng đó.')
     # restaurant_name = st.text_area(label="Input restaurant name:")
 
     # Dropdown for selecting restaurant
-    name_list = data['Restaurant'].unique()
+    name_list = res_df['Restaurant'].unique()
     selected_restaurant = st.selectbox("Select a restaurant:", sorted(name_list))
 
     # Display information about the selected restaurant
-    restaurant_info = data[data["Restaurant"] == selected_restaurant]
+    restaurant_info = res_df[res_df["Restaurant"] == selected_restaurant]
 
     if not restaurant_info.empty:
         # Display rating and word cloud
         # Filter the dataset based on the restaurant name provided by the user
         # restaurant_df = data[data['Restaurant'] == restaurant_name]
         # Extract ratings and comments
-        ratings = restaurant_info['Rating']
-        rating_score = ratings.mean()
-        price = restaurant_info['Price'].values[0]
-        address = restaurant_info['Address'].values[0]
+        # ratings = restaurant_info['Rating']
+        # rating_score = ratings.mean()
+        # price = restaurant_info['Price'].values[0]
+        # address = restaurant_info['Address'].values[0]
 
         # st.write('Restaurant: ' + str(selected_restaurant))
         # st.write("Average Rating: " + str(round(rating_score, 2)) + '/10')
@@ -170,8 +203,13 @@ def fn_restaurant_explore():
         # st.write("""
         # #### Một số từ ngữ xuất hiện nhiều trong comment của khách hàng""")
 
-        comments = ' '.join(restaurant_info['Comment_new'])
-        generate_wordcloud(comments)
+        # comments = ' '.join(restaurant_info['Comment_new'])
+        id_res = res_df['ID'].values[0]
+        restaurant_sentiment_analysis(final_df=final_df,
+                                      res_df=res_df,
+                                      cleanser=cleanser,
+                                      id_res=id_res,
+                                      top_words=5)
 
 
 def fn_about_project():

@@ -84,15 +84,22 @@ def create_adj_wordcloud(df, cleanser):
     wc_pos = WordCloud(background_color='white',
                        collocations=False,
                        max_words=50).generate(_comments)
-    plt.figure(figsize=(10, 6))
-    plt.imshow(wc_pos, interpolation='bilinear')
-    plt.axis('off')
-    st.set_option('deprecation.showPyplotGlobalUse', False)
-    st.pyplot()
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    # Display WordCloud using Matplotlib's imshow on the specified ax
+    ax.imshow(wc_pos, interpolation='bilinear')
+    ax.axis('off')
+
+    # Display WordCloud in Streamlit
+    st.pyplot(fig)
     return full_adj_word, wc_pos
 
 
-def restaurant_sentiment_analysis(final_df, res_df, id_res=None, top_words: int = 5):
+def restaurant_sentiment_analysis(final_df,
+                                  res_df,
+                                  cleanser,
+                                  id_res=None,
+                                  top_words: int = 5):
     # ---- FIRST STEP: SELECT RESTAURANT ---
     if id_res:
         id_selected = id_res
@@ -149,7 +156,7 @@ def restaurant_sentiment_analysis(final_df, res_df, id_res=None, top_words: int 
                 else:
                     name = 'NEUTRAL'
 
-                word_ls, pos_wc = create_adj_wordcloud(df=df)
+                word_ls, pos_wc = create_adj_wordcloud(df=df,cleanser=cleanser)
                 print("--- Succeed to create WordCloud")
                 wc_ls.append({'name': name, 'wordcloud': pos_wc})
                 full_word_ls.append({'name': name, 'words': word_ls})

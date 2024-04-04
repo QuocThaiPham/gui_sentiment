@@ -222,7 +222,7 @@ def fn_restaurant_explore():
     restaurant_info = res_df[res_df["Restaurant"] == selected_restaurant]
 
     if not restaurant_info.empty:
-        id_res = res_df['ID'].values[0]
+        id_res = restaurant_info['ID'].values[0]
         restaurant_sentiment_analysis(final_df=final_df,
                                       res_df=res_df,
                                       cleanser=cleanser,

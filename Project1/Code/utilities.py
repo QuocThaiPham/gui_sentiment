@@ -27,7 +27,9 @@ def preprocessing_text(text,
     clean_text = cleanser.process_text(text=text)
     clean_text = cleanser.convert_unicode(str(clean_text))
     clean_text = cleanser.process_postag_thesea(clean_text)
-
+    #print(clean_text)
+    a = cleanser.extract_adjectives_vietnamese(text)
+    print(a)
     # initialize countvectorizer and TFIDF
     vectorizer = vector_model
     tfidf = tfidf_model

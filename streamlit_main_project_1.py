@@ -167,10 +167,26 @@ def fn_new_prediction():
     st.write('Not like: Mọi người nên tránh xa quán này nha, dở lắm.')
     if type == "Upload":
         # Upload file
+        st.write("Please create a file csv with same following format:")
         uploaded_file_1 = st.file_uploader("Choose a file", type=['txt', 'csv'])
         if uploaded_file_1 is not None:
-            lines = pd.read_csv(uploaded_file_1, header=None)
-            st.dataframe(lines)
+            lines_df = pd.read_csv(uploaded_file_1, header=0,delimiter=';')
+            st.write(lines_df)
+            X_pre = lines_df['Content'].apply(lambda x: preprocessing_text(text=x,
+                                                                           cleanser=cleanser,
+                                                                           vector_model=vec_m,
+                                                                           tfidf_model=tfidf_m))
+            for i,x in enumerate(X_pre):
+                y_pred_new = model.predict(x)
+                # st.code("New predictions (0: Not Like, 1: Neutral, 2: Like): " + str(y_pred_new))
+                st.write(f"Comment: {lines_df.loc[i,['Content']].values[0]}")
+                #st.write(y_pred_new)
+                display_emotion(y_pred_new)
+
+            # prediction_ = model.predict(np.array([X_pre]))
+            # #print(prediction_)
+            # lines_df['Prediction'] = prediction_
+            # st.write(lines_df)
             # st.write(lines.columns)
             # lines = lines[0]
             # flag = True
@@ -187,6 +203,7 @@ def fn_new_prediction():
             y_pred_new = model.predict(x_new)
             # st.code("New predictions (0: Not Like, 1: Neutral, 2: Like): " + str(y_pred_new))
             st.write(f"Comment: {content}")
+            #st.write(y_pred_new)
             display_emotion(y_pred_new)
 
 

@@ -167,29 +167,42 @@ def fn_new_prediction():
     st.write('Not like: Mọi người nên tránh xa quán này nha, dở lắm.')
     if type == "Upload":
         # Upload file
-        st.write("Please create a file csv with same following format:")
+
+        # SAMPLE
+        st.write("#### 📝 **Please create a CSV file with the following format:** 📄")
+        data = {'Content': ['Quán này ngon lắm đó mọi người!!!',
+                            'Quán này tạm ổn thôi à.',
+                            'Mọi người nên tránh xa quán này nha, dở lắm.']}
+        df = pd.DataFrame(data)
+        # Display the DataFrame as a table
+        st.table(df)
+
         uploaded_file_1 = st.file_uploader("Choose a file", type=['txt', 'csv'])
         if uploaded_file_1 is not None:
             lines_df = pd.read_csv(uploaded_file_1, header=0,delimiter=';')
+            st.write("Original DataFrame:")
             st.write(lines_df)
             X_pre = lines_df['Content'].apply(lambda x: preprocessing_text(text=x,
                                                                            cleanser=cleanser,
                                                                            vector_model=vec_m,
                                                                            tfidf_model=tfidf_m))
+            labels_dict = {0: 'Dislike', 1: 'Neutral', 2: 'Like'}
+            labels = []
             for i,x in enumerate(X_pre):
                 y_pred_new = model.predict(x)
                 # st.code("New predictions (0: Not Like, 1: Neutral, 2: Like): " + str(y_pred_new))
                 st.write(f"Comment: {lines_df.loc[i,['Content']].values[0]}")
-                #st.write(y_pred_new)
                 display_emotion(y_pred_new)
+                labels.append(labels_dict[y_pred_new.item()])
 
             # prediction_ = model.predict(np.array([X_pre]))
             # #print(prediction_)
-            # lines_df['Prediction'] = prediction_
-            # st.write(lines_df)
-            # st.write(lines.columns)
-            # lines = lines[0]
-            # flag = True
+            lines_df['Prediction'] = labels
+
+            st.success("Contents are predicted successfully!")
+            st.write("Updated DataFrame:")
+            st.write(lines_df)
+
     if type == "Input":
         st.write("### :blue[Please Input your comment 👇]")
         content = st.text_area(label="")
@@ -199,11 +212,8 @@ def fn_new_prediction():
                                        cleanser=cleanser,
                                        vector_model=vec_m,
                                        tfidf_model=tfidf_m)
-            # st.write(x_new)
             y_pred_new = model.predict(x_new)
-            # st.code("New predictions (0: Not Like, 1: Neutral, 2: Like): " + str(y_pred_new))
             st.write(f"Comment: {content}")
-            #st.write(y_pred_new)
             display_emotion(y_pred_new)
 
 

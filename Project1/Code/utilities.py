@@ -27,10 +27,9 @@ def preprocessing_text(text,
     clean_text = cleanser.process_text(text=text)
     clean_text = cleanser.convert_unicode(str(clean_text))
     clean_text = cleanser.process_postag_thesea(clean_text)
-    #print(clean_text)
     a = cleanser.extract_adjectives_vietnamese(text)
     print(a)
-    # initialize countvectorizer and TFIDF
+    # initialize count vectorized and TFIDF
     vectorizer = vector_model
     tfidf = tfidf_model
 
@@ -143,11 +142,6 @@ def restaurant_sentiment_analysis(final_df,
         - Average Price:: {price}
         - Address:: {address}
 """)
-        # print("Restaurant name:", restaurant_name)
-        # print("Type restaurant:", type_restaurant)
-        # print("Average Rating:", round(rating_score, 2))
-        # print("Average Price:", price)
-        # print("Address:", address)
 
         # Extract Positive Negative and Neutral
         df_pos = selected_res[selected_res['result'] == 'positive']
@@ -165,10 +159,9 @@ def restaurant_sentiment_analysis(final_df,
                 else:
                     name = 'NEUTRAL'
 
+                st.subheader(f'{name} Review')
                 word_ls, pos_wc = create_adj_wordcloud(df=df,
-                                                       cleanser=cleanser,
-                                                       title=f'{name} Review')
-                #print("--- Succeed to create WordCloud")
+                                                       cleanser=cleanser)
                 wc_ls.append({'name': name, 'wordcloud': pos_wc})
                 full_word_ls.append({'name': name, 'words': word_ls})
             else:
@@ -180,55 +173,50 @@ def restaurant_sentiment_analysis(final_df,
                     name = 'NEUTRAL'
                 print(f"\n>>> There is not type **{name}** in DataFrame")
 
-        # # DISPLAY WORDCLOUD
-        # fig_ = plt.figure(figsize=(15, 7))
-        # # setting values to rows and column variables
-        # columns = len(wc_ls)
-        # for i in range(columns):
-        #     # Title name:
-        #     name = wc_ls[i]['name']
-        #     # Adds a subplot at the 1st position
-        #     fig_.add_subplot(1, columns, i + 1)
-        #
-        #     # showing image
-        #     plt.imshow(wc_ls[i]['wordcloud'])
-        #     plt.axis('off')
-        #     plt.title(f"WordCloud of {name} review")
-        #
-        # st.pyplot(fig=fig_)
         # DISPLAY TOP WORD in each class
-        st.write("\n\n>>> GET TOP 5 WORDS OCCURING MOST IN EACH CLASS:\n")
+        st.subheader("GET TOP 5 WORDS OCCURRING MOST IN EACH CLASS:")
         for kind in full_word_ls:
             name = kind['name']
             concat_list = get_top_duplicated_words(kind['words'], top_n=top_words)
-            st.write(f'{name}: {concat_list}')
+            st.write(f'### {name}')
+            text = '\n'.join([f"- {v[0]}: {v[1]} words" for v in concat_list])
+            st.write(text)
 
         # DISPLAY RATE OF EACH TYPE REVIEW BY MONTH
+        st.subheader('Rating of Type Line Thourgh by Month')
         palette = sns.color_palette(palette='husl', n_colors=3)
-        fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(12, 8), sharex=True)
+        fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(16, 15), sharex=True)
         sns.lineplot(x=df_pos['date_time'].dt.month,
                      y=df_pos['rating_scaler'],
                      color=palette[0],
                      label='Positive',
                      ax=ax[0])
-        ax[0].set_ylabel("Rating")
+        ax[0].set_ylabel("Rating",fontsize=16)
+        ax[0].tick_params(axis='x', labelsize=15)  # Adjust font size of x-values
+        ax[0].tick_params(axis='y', labelsize=15)  # Adjust font size of y-values
+        ax[0].legend(fontsize=20)
 
         sns.lineplot(x=df_neg['date_time'].dt.month,
                      y=df_neg['rating_scaler'],
                      color=palette[1],
                      label='Negative',
                      ax=ax[1])
-        ax[1].set_ylabel("Rating")
+        ax[1].set_ylabel("Rating",fontsize=16)
+        ax[1].tick_params(axis='x', labelsize=15)  # Adjust font size of x-values
+        ax[1].tick_params(axis='y', labelsize=15)  # Adjust font size of y-values
+        ax[1].legend(fontsize=20)
 
         sns.lineplot(x=df_neu['date_time'].dt.month,
                      y=df_neu['rating_scaler'],
                      color=palette[2],
                      label='Neutral',
                      ax=ax[2])
-        ax[2].set_ylabel("Rating")
+        ax[2].set_ylabel("Rating",fontsize=16)
+        ax[2].tick_params(axis='x', labelsize=15)  # Adjust font size of x-values
+        ax[2].tick_params(axis='y', labelsize=15)  # Adjust font size of y-values
+        ax[2].legend(fontsize=20)
 
         # Set a big title for the entire figure
-        fig.suptitle('Rating of Type Line Thourgh by Month', fontsize=16, y=1.02)
-        plt.xlabel('Review Month')
+        plt.xlabel('Review by Month',fontsize=20)
         fig.tight_layout()
         st.pyplot(fig)

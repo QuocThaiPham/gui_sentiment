@@ -308,13 +308,13 @@ def main():
         elif choice == 'Restaurant Explore':
             st.title(f":orange[{choice}]")
             st.write("""
-            - Based on data collected from Shopee Food, we have developed a system to assist in analyzing customer segmentation for a specific restaurant.
+            - Based on data collected from Shopee Food, we have developed a system to assist in analyzing sentiment of review for a specific restaurant.
             
             - Our objective is to generate WordClouds for positive, negative, and neutral comments.
             
             - Through this process, we can identify the top five most frequently occurring words for each respective sentiment category.
             
-            - Additionally, we will examine the temporal distribution of comments across different sentiment categories.
+            - Additionally, we will examine the kind comments across mutiple months.
             """)
             fn_restaurant_explore()
 

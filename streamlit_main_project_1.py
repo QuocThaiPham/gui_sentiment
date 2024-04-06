@@ -61,10 +61,10 @@ res_df = final_df[feat]
 # ----------------- BUILD GUI -----------------
 def fn_business_objective():
     # Upload file
-    uploaded_file = st.file_uploader("Choose a file", type=['csv'])
-    if uploaded_file is not None:
-        data = pd.read_csv(uploaded_file, encoding='latin-1')
-        data.to_csv("resources/new_file.csv", index=False)
+    # uploaded_file = st.file_uploader("Choose a file", type=['csv'])
+    # if uploaded_file is not None:
+    #     data = pd.read_csv(uploaded_file, encoding='latin-1')
+    #     data.to_csv("resources/new_file.csv", index=False)
 
     st.subheader("EDA DATA")
     st.write("- There are 2 datasets including the restaurant dataframe and the review dataframe")
@@ -307,6 +307,15 @@ def main():
             fn_new_prediction()
         elif choice == 'Restaurant Explore':
             st.title(f":orange[{choice}]")
+            st.write("""
+            - Based on data collected from Shopee Food, we have developed a system to assist in analyzing customer segmentation for a specific restaurant.
+            
+            - Our objective is to generate WordClouds for positive, negative, and neutral comments.
+            
+            - Through this process, we can identify the top five most frequently occurring words for each respective sentiment category.
+            
+            - Additionally, we will examine the temporal distribution of comments across different sentiment categories.
+            """)
             fn_restaurant_explore()
 
 
